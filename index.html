@@ -82,6 +82,8 @@
       background: white;
       padding: 10px;
     }
+    /* cuando el contenedor del shift está oculto queremos que no deje hueco */
+    .hidden { display: none !important; }
     @media (max-width: 600px) {
       textarea, input, button, select {
         font-size: 1.3rem;
@@ -98,12 +100,17 @@
 
   <div class="fila">
     <label for="modoTexto">Modo:</label>
-    <select id="modoTexto" onchange="mostrarTabla()">
+    <select id="modoTexto" onchange="onModoCambio()">
       <option value="cesar" selected>César</option>
       <option value="nato">Lengua aérea</option>
       <option value="binario">Binario</option>
     </select>
-    <input type="number" id="shift" value="3" min="-25" max="25" title="Desplazamiento César">
+
+    <!-- Shift dentro de su propio contenedor para poder ocultarlo -->
+    <div id="shiftContainer" style="display:flex; align-items:center; gap:8px;">
+      <label for="shift" style="margin-left:8px;">Desplazamiento:</label>
+      <input type="number" id="shift" value="3" min="-25" max="25" title="Desplazamiento César">
+    </div>
   </div>
 
   <div class="fila">
@@ -152,6 +159,22 @@
 
     function getModo() {
       return document.getElementById("modoTexto").value;
+    }
+
+    function onModoCambio() {
+      // ocultar/mostrar shift según el modo
+      const modo = getModo();
+      const shiftContainer = document.getElementById("shiftContainer");
+      const shiftInput = document.getElementById("shift");
+      if (modo === "cesar") {
+        shiftContainer.classList.remove("hidden");
+        shiftInput.disabled = false;
+      } else {
+        shiftContainer.classList.add("hidden");
+        shiftInput.disabled = true;
+      }
+      // actualizar la tabla
+      mostrarTabla();
     }
 
     function cesar(str, shift) {
@@ -313,10 +336,17 @@
             <tr><th>Letra</th><th>Binario</th></tr>
             ${bin}
           </table>`;
+      } else {
+        tablas.innerHTML = ""; // César no muestra tabla
       }
     }
 
-    mostrarTabla();
+    // Inicializar estado correcto al cargar
+    document.addEventListener("DOMContentLoaded", () => {
+      onModoCambio();   // oculta/activa shift según el modo inicial
+      mostrarQR();      // muestra la sección QR correcta (crear por defecto)
+      mostrarTabla();   // muestra la tabla acorde al modo inicial
+    });
   </script>
 </body>
 </html>
