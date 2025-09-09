@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Transformador César / Lengua Aérea + QR</title>
+  <title>Transformador César / Lengua Aérea / Binario + QR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -47,6 +47,13 @@
     button:hover {
       background: #005a99;
       transform: scale(1.05);
+    }
+    /* Botón rojo para borrar */
+    .borrar {
+      background: #cc0000;
+    }
+    .borrar:hover {
+      background: #990000;
     }
     label { margin-right: 12px; }
     input[type="number"], input[type="text"] {
@@ -104,12 +111,13 @@
     <input type="number" id="shift" value="3" min="-25" max="25">
     <label><input type="radio" name="modo" value="nato"> Lengua aérea</label>
     <label><input type="radio" name="modo" value="ambas"> Ambas</label>
+    <label><input type="radio" name="modo" value="binario"> Binario</label>
   </div>
 
   <div class="fila">
     <button onclick="transformar()">Transformar</button>
     <button onclick="destransformar()">Destransformar</button>
-    <button onclick="borrar()">Borrar todo</button>
+    <button class="borrar" onclick="borrar()">Borrar todo</button>
   </div>
 
   <h3>🔗 Generar Código QR de un Link</h3>
@@ -178,6 +186,18 @@
       }).join("");
     }
 
+    function toBinario(str) {
+      return str.split("").map(ch=>{
+        return ch.charCodeAt(0).toString(2).padStart(8,"0");
+      }).join(" ");
+    }
+
+    function fromBinario(str) {
+      return str.split(/\s+/).map(b=>{
+        return String.fromCharCode(parseInt(b,2));
+      }).join("");
+    }
+
     function animarTexto(textoFinal) {
       const area = document.getElementById("texto");
       area.value = "";
@@ -200,6 +220,7 @@
       if(modo==="cesar") res = cesar(txt, shift);
       else if(modo==="nato") res = toNATO(txt);
       else if(modo==="ambas") res = toNATO(cesar(txt, shift));
+      else if(modo==="binario") res = toBinario(txt);
       animarTexto(res);
     }
 
@@ -211,6 +232,7 @@
       if(modo==="cesar") res = cesar(txt, -shift);
       else if(modo==="nato") res = fromNATO(txt);
       else if(modo==="ambas") res = cesar(fromNATO(txt), -shift);
+      else if(modo==="binario") res = fromBinario(txt);
       animarTexto(res);
     }
 
@@ -249,7 +271,7 @@
     }
   </script>
 
-  <!-- Librería QR (ligera y directa) -->
+  <!-- Librería QR -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 </body>
 </html>
