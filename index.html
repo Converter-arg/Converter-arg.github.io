@@ -15,7 +15,7 @@
       border-radius: 16px;
     }
     h2, h3 { color: #61dafb; text-align: center; }
-    textarea, input, button {
+    textarea, input, button, select {
       font-size: 1.1rem;
       margin: 8px 0;
       padding: 12px;
@@ -54,10 +54,6 @@
     .borrar:hover {
       background: #990000;
     }
-    label { margin-right: 12px; }
-    input[type="number"], input[type="text"] {
-      text-align: center;
-    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -87,13 +83,11 @@
       padding: 10px;
     }
     @media (max-width: 600px) {
-      textarea, input, button {
+      textarea, input, button, select {
         font-size: 1.3rem;
         padding: 14px;
       }
-      table {
-        font-size: 1.1rem;
-      }
+      table { font-size: 1.1rem; }
     }
   </style>
 </head>
@@ -103,10 +97,13 @@
   <textarea id="texto" placeholder="Escribí aquí..."></textarea>
 
   <div class="fila">
-    <label><input type="radio" name="modo" value="cesar" checked> César</label>
-    <input type="number" id="shift" value="3" min="-25" max="25">
-    <label><input type="radio" name="modo" value="nato"> Lengua aérea</label>
-    <label><input type="radio" name="modo" value="binario"> Binario</label>
+    <label for="modoTexto">Modo:</label>
+    <select id="modoTexto" onchange="mostrarTabla()">
+      <option value="cesar" selected>César</option>
+      <option value="nato">Lengua aérea</option>
+      <option value="binario">Binario</option>
+    </select>
+    <input type="number" id="shift" value="3" min="-25" max="25" title="Desplazamiento César">
   </div>
 
   <div class="fila">
@@ -115,56 +112,33 @@
     <button class="borrar" onclick="borrar()">Borrar todo</button>
   </div>
 
-  <h3>🔗 Generar Código QR</h3>
+  <h3>🔗 Sección QR</h3>
   <div class="fila">
-    <input type="text" id="link" placeholder="Pegá un link aquí" style="flex:1">
-    <button onclick="generarQR()">Generar QR</button>
+    <label for="modoQR">Modo:</label>
+    <select id="modoQR" onchange="mostrarQR()">
+      <option value="crear" selected>Crear QR</option>
+      <option value="leer">Leer QR</option>
+    </select>
   </div>
-  <div id="qr"></div>
-  <div style="text-align:center; margin-top:10px;">
-    <button onclick="descargarQR()">Descargar QR</button>
+
+  <div id="qrCrear">
+    <div class="fila">
+      <input type="text" id="link" placeholder="Pegá un link aquí" style="flex:1">
+      <button onclick="generarQR()">Generar QR</button>
+    </div>
+    <div id="qr"></div>
+    <div style="text-align:center; margin-top:10px;">
+      <button onclick="descargarQR()">Descargar QR</button>
+    </div>
   </div>
 
-  <h3>📷 Leer QR desde Imagen</h3>
-  <input type="file" id="imagenQR" accept="image/*">
-  <button onclick="leerQR()">Leer QR</button>
-  <p id="resultadoQR"></p>
+  <div id="qrLeer" style="display:none;">
+    <input type="file" id="imagenQR" accept="image/*">
+    <button onclick="leerQR()">Leer QR</button>
+    <p id="resultadoQR"></p>
+  </div>
 
-  <h3>📖 Tabla Lengua Aérea (NATO)</h3>
-  <table>
-    <tr><th>Letra</th><th>Palabra</th></tr>
-    <tr><td>A</td><td>Alfa</td></tr><tr><td>B</td><td>Bravo</td></tr>
-    <tr><td>C</td><td>Charlie</td></tr><tr><td>D</td><td>Delta</td></tr>
-    <tr><td>E</td><td>Eco</td></tr><tr><td>F</td><td>Foxtrot</td></tr>
-    <tr><td>G</td><td>Golf</td></tr><tr><td>H</td><td>Hotel</td></tr>
-    <tr><td>I</td><td>India</td></tr><tr><td>J</td><td>Juliett</td></tr>
-    <tr><td>K</td><td>Kilo</td></tr><tr><td>L</td><td>Lima</td></tr>
-    <tr><td>M</td><td>Mike</td></tr><tr><td>N</td><td>November</td></tr>
-    <tr><td>O</td><td>Oscar</td></tr><tr><td>P</td><td>Papa</td></tr>
-    <tr><td>Q</td><td>Quebec</td></tr><tr><td>R</td><td>Romeo</td></tr>
-    <tr><td>S</td><td>Sierra</td></tr><tr><td>T</td><td>Tango</td></tr>
-    <tr><td>U</td><td>Uniform</td></tr><tr><td>V</td><td>Victor</td></tr>
-    <tr><td>W</td><td>Whiskey</td></tr><tr><td>X</td><td>X-ray</td></tr>
-    <tr><td>Y</td><td>Yankee</td></tr><tr><td>Z</td><td>Zulu</td></tr>
-  </table>
-
-  <h3>💻 Tabla Binaria (ASCII)</h3>
-  <table>
-    <tr><th>Letra</th><th>Binario</th></tr>
-    <tr><td>A</td><td>01000001</td></tr><tr><td>B</td><td>01000010</td></tr>
-    <tr><td>C</td><td>01000011</td></tr><tr><td>D</td><td>01000100</td></tr>
-    <tr><td>E</td><td>01000101</td></tr><tr><td>F</td><td>01000110</td></tr>
-    <tr><td>G</td><td>01000111</td></tr><tr><td>H</td><td>01001000</td></tr>
-    <tr><td>I</td><td>01001001</td></tr><tr><td>J</td><td>01001010</td></tr>
-    <tr><td>K</td><td>01001011</td></tr><tr><td>L</td><td>01001100</td></tr>
-    <tr><td>M</td><td>01001101</td></tr><tr><td>N</td><td>01001110</td></tr>
-    <tr><td>O</td><td>01001111</td></tr><tr><td>P</td><td>01010000</td></tr>
-    <tr><td>Q</td><td>01010001</td></tr><tr><td>R</td><td>01010010</td></tr>
-    <tr><td>S</td><td>01010011</td></tr><tr><td>T</td><td>01010100</td></tr>
-    <tr><td>U</td><td>01010101</td></tr><tr><td>V</td><td>01010110</td></tr>
-    <tr><td>W</td><td>01010111</td></tr><tr><td>X</td><td>01011000</td></tr>
-    <tr><td>Y</td><td>01011001</td></tr><tr><td>Z</td><td>01011010</td></tr>
-  </table>
+  <div id="tablas"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
@@ -177,7 +151,7 @@
     };
 
     function getModo() {
-      return document.querySelector('input[name="modo"]:checked').value;
+      return document.getElementById("modoTexto").value;
     }
 
     function cesar(str, shift) {
@@ -310,6 +284,39 @@
       };
       reader.readAsDataURL(file);
     }
+
+    function mostrarQR() {
+      const modo = document.getElementById("modoQR").value;
+      document.getElementById("qrCrear").style.display = (modo==="crear")?"block":"none";
+      document.getElementById("qrLeer").style.display = (modo==="leer")?"block":"none";
+    }
+
+    function mostrarTabla() {
+      const modo = getModo();
+      const tablas = document.getElementById("tablas");
+      tablas.innerHTML = "";
+      if(modo==="nato"){
+        tablas.innerHTML = `
+          <h3>📖 Tabla Lengua Aérea (NATO)</h3>
+          <table>
+            <tr><th>Letra</th><th>Palabra</th></tr>
+            ${Object.entries(NATO).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("")}
+          </table>`;
+      } else if(modo==="binario"){
+        let bin = "";
+        for(let i=65;i<=90;i++){
+          bin += `<tr><td>${String.fromCharCode(i)}</td><td>${i.toString(2).padStart(8,"0")}</td></tr>`;
+        }
+        tablas.innerHTML = `
+          <h3>💻 Tabla Binaria (ASCII A-Z)</h3>
+          <table>
+            <tr><th>Letra</th><th>Binario</th></tr>
+            ${bin}
+          </table>`;
+      }
+    }
+
+    mostrarTabla();
   </script>
 </body>
 </html>
