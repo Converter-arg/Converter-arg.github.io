@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Transformador César / Lengua Aérea</title>
+  <style>
+    body {
+      font-family: "Consolas", monospace;
+      background: #1e1e1e; /* fondo estilo Carbon */
+      color: #e0e0e0;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+      border-radius: 16px; /* borde del contenedor */
+    }
+    h2 { color: #61dafb; }
+    textarea, input, button {
+      font-size: 1rem;
+      margin: 6px 0;
+      padding: 10px;
+      border-radius: 12px; /* bordes redondeados */
+      border: 1px solid #333;
+      background: #2d2d2d;
+      color: #e0e0e0;
+      box-sizing: border-box;
+    }
+    textarea {
+      width: 100%;
+      resize: vertical;
+      min-height: 120px;
+    }
+    .fila {
+      margin: 12px 0;
+    }
+    button {
+      background: #007acc;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:hover {
+      background: #005a99;
+      transform: scale(1.05);
+    }
+    label {
+      margin-right: 12px;
+    }
+    input[type="number"] {
+      width: 60px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>Transformador de Texto</h2>
+
+  <textarea id="texto" placeholder="Escribí aquí..."></textarea>
+
+  <div class="fila">
+    <label><input type="radio" name="modo" value="cesar" checked> César</label>
+    <input type="number" id="shift" value="3" min="-25" max="25">
+    <label><input type="radio" name="modo" value="nato"> Lengua aérea</label>
+    <label><input type="radio" name="modo" value="ambas"> Ambas</label>
+  </div>
+
+  <div class="fila">
+    <button onclick="transformar()">Transformar</button>
+    <button onclick="destransformar()">Destransformar</button>
+  </div>
+
+  <script>
+    const NATO = {
+      A:"Alfa",B:"Bravo",C:"Charlie",D:"Delta",E:"Eco",F:"Foxtrot",G:"Golf",H:"Hotel",
+      I:"India",J:"Juliett",K:"Kilo",L:"Lima",M:"Mike",N:"November",O:"Oscar",P:"Papa",
+      Q:"Quebec",R:"Romeo",S:"Sierra",T:"Tango",U:"Uniform",V:"Victor",W:"Whiskey",
+      X:"X-ray",Y:"Yankee",Z:"Zulu"
+    };
+
+    function getModo() {
+      return document.querySelector('input[name="modo"]:checked').value;
+    }
+
+    function cesar(str, shift) {
+      shift = ((shift % 26) + 26) % 26;
+      return str.split("").map(ch=>{
+        let c = ch.charCodeAt(0);
+        if(c>=65 && c<=90) return String.fromCharCode((c-65+shift)%26+65);
+        if(c>=97 && c<=122) return String.fromCharCode((c-97+shift)%26+97);
+        return ch;
+      }).join("");
+    }
+
+    function toNATO(str) {
+      return str.split("").map(ch=>{
+        if(/[a-z]/i.test(ch)) return NATO[ch.toUpperCase()];
+        if(ch===" ") return "/";
+        return ch;
+      }).join(" ");
+    }
+
+    function fromNATO(str) {
+      const inv = Object.fromEntries(Object.entries(NATO).map(([k,v])=>[v.toLowerCase(),k]));
+      return str.split(/\s+/).map(w=>{
+        if(w==="/") return " ";
+        return inv[w.toLowerCase()]||w;
+      }).join("");
+    }
+
+    function animarTexto(textoFinal) {
+      const area = document.getElementById("texto");
+      area.value = ""; // limpiar antes
+      let i = 0;
+      function escribir() {
+        if(i < textoFinal.length) {
+          area.value += textoFinal[i];
+          i++;
+          setTimeout(escribir, 30); // velocidad
+        }
+      }
+      escribir();
+    }
+
+    function transformar() {
+      const txt = document.getElementById("texto").value;
+      const modo = getModo();
+      const shift = parseInt(document.getElementById("shift").value)||0;
+      let res="";
+      if(modo==="cesar") res = cesar(txt, shift);
+      else if(modo==="nato") res = toNATO(txt);
+      else if(modo==="ambas") res = toNATO(cesar(txt, shift));
+      animarTexto(res);
+    }
+
+    function destransformar() {
+      const txt = document.getElementById("texto").value;
+      const modo = getModo();
+      const shift = parseInt(document.getElementById("shift").value)||0;
+      let res="";
+      if(modo==="cesar") res = cesar(txt, -shift);
+      else if(modo==="nato") res = fromNATO(txt);
+      else if(modo==="ambas") res = cesar(fromNATO(txt), -shift);
+      animarTexto(res);
+    }
+
+    // Enter = transformar
+    document.getElementById("texto").addEventListener("keydown", e=>{
+      if(e.key==="Enter"){
+        e.preventDefault();
+        transformar();
+      }
+    });
+  </script>
+</body>
+</html>
