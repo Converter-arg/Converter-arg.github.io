@@ -3,22 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <title>Transformador César / Lengua Aérea</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: "Consolas", monospace;
-      background: #1e1e1e; /* fondo estilo Carbon */
+      background: #1e1e1e;
       color: #e0e0e0;
       padding: 20px;
-      max-width: 700px;
+      max-width: 900px;
       margin: auto;
-      border-radius: 16px; /* borde del contenedor */
+      border-radius: 16px;
     }
-    h2 { color: #61dafb; }
+    h2 { color: #61dafb; text-align: center; }
     textarea, input, button {
-      font-size: 1rem;
-      margin: 6px 0;
-      padding: 10px;
-      border-radius: 12px; /* bordes redondeados */
+      font-size: 1.1rem;
+      margin: 8px 0;
+      padding: 12px;
+      border-radius: 12px;
       border: 1px solid #333;
       background: #2d2d2d;
       color: #e0e0e0;
@@ -27,10 +28,14 @@
     textarea {
       width: 100%;
       resize: vertical;
-      min-height: 120px;
+      min-height: 140px;
     }
     .fila {
-      margin: 12px 0;
+      margin: 14px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
     }
     button {
       background: #007acc;
@@ -47,8 +52,37 @@
       margin-right: 12px;
     }
     input[type="number"] {
-      width: 60px;
+      width: 70px;
       text-align: center;
+    }
+    /* Tabla NATO */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 0.95rem;
+    }
+    th, td {
+      border: 1px solid #444;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background: #007acc;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background: #2a2a2a;
+    }
+    /* Modo móvil */
+    @media (max-width: 600px) {
+      textarea, input, button {
+        font-size: 1.3rem;
+        padding: 14px;
+      }
+      table {
+        font-size: 1.1rem;
+      }
     }
   </style>
 </head>
@@ -67,6 +101,7 @@
   <div class="fila">
     <button onclick="transformar()">Transformar</button>
     <button onclick="destransformar()">Destransformar</button>
+    <button onclick="borrar()">Borrar todo</button>
   </div>
 
   <script>
@@ -109,13 +144,13 @@
 
     function animarTexto(textoFinal) {
       const area = document.getElementById("texto");
-      area.value = ""; // limpiar antes
+      area.value = "";
       let i = 0;
       function escribir() {
         if(i < textoFinal.length) {
           area.value += textoFinal[i];
           i++;
-          setTimeout(escribir, 30); // velocidad
+          setTimeout(escribir, 25);
         }
       }
       escribir();
@@ -143,6 +178,10 @@
       animarTexto(res);
     }
 
+    function borrar() {
+      document.getElementById("texto").value = "";
+    }
+
     // Enter = transformar
     document.getElementById("texto").addEventListener("keydown", e=>{
       if(e.key==="Enter"){
@@ -151,5 +190,23 @@
       }
     });
   </script>
+
+  <h3>📖 Tabla Lengua Aérea (NATO)</h3>
+  <table>
+    <tr><th>Letra</th><th>Palabra</th></tr>
+    <tr><td>A</td><td>Alfa</td></tr><tr><td>B</td><td>Bravo</td></tr>
+    <tr><td>C</td><td>Charlie</td></tr><tr><td>D</td><td>Delta</td></tr>
+    <tr><td>E</td><td>Eco</td></tr><tr><td>F</td><td>Foxtrot</td></tr>
+    <tr><td>G</td><td>Golf</td></tr><tr><td>H</td><td>Hotel</td></tr>
+    <tr><td>I</td><td>India</td></tr><tr><td>J</td><td>Juliett</td></tr>
+    <tr><td>K</td><td>Kilo</td></tr><tr><td>L</td><td>Lima</td></tr>
+    <tr><td>M</td><td>Mike</td></tr><tr><td>N</td><td>November</td></tr>
+    <tr><td>O</td><td>Oscar</td></tr><tr><td>P</td><td>Papa</td></tr>
+    <tr><td>Q</td><td>Quebec</td></tr><tr><td>R</td><td>Romeo</td></tr>
+    <tr><td>S</td><td>Sierra</td></tr><tr><td>T</td><td>Tango</td></tr>
+    <tr><td>U</td><td>Uniform</td></tr><tr><td>V</td><td>Victor</td></tr>
+    <tr><td>W</td><td>Whiskey</td></tr><tr><td>X</td><td>X-ray</td></tr>
+    <tr><td>Y</td><td>Yankee</td></tr><tr><td>Z</td><td>Zulu</td></tr>
+  </table>
 </body>
 </html>
