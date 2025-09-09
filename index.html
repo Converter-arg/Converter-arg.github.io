@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Transformador César / Lengua Aérea</title>
+  <title>Transformador César / Lengua Aérea + QR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -14,7 +14,7 @@
       margin: auto;
       border-radius: 16px;
     }
-    h2 { color: #61dafb; text-align: center; }
+    h2, h3 { color: #61dafb; text-align: center; }
     textarea, input, button {
       font-size: 1.1rem;
       margin: 8px 0;
@@ -48,11 +48,8 @@
       background: #005a99;
       transform: scale(1.05);
     }
-    label {
-      margin-right: 12px;
-    }
-    input[type="number"] {
-      width: 70px;
+    label { margin-right: 12px; }
+    input[type="number"], input[type="text"] {
       text-align: center;
     }
     /* Tabla NATO */
@@ -73,6 +70,17 @@
     }
     tr:nth-child(even) {
       background: #2a2a2a;
+    }
+    /* QR */
+    #qr {
+      margin-top: 20px;
+      text-align: center;
+    }
+    canvas {
+      margin-top: 10px;
+      border-radius: 12px;
+      background: white;
+      padding: 10px;
     }
     /* Modo móvil */
     @media (max-width: 600px) {
@@ -103,6 +111,34 @@
     <button onclick="destransformar()">Destransformar</button>
     <button onclick="borrar()">Borrar todo</button>
   </div>
+
+  <h3>🔗 Generar Código QR de un Link</h3>
+  <div class="fila">
+    <input type="text" id="link" placeholder="Pegá un link aquí" style="flex:1">
+    <button onclick="generarQR()">Generar QR</button>
+  </div>
+  <div id="qr"></div>
+  <div style="text-align:center; margin-top:10px;">
+    <button onclick="descargarQR()">Descargar QR</button>
+  </div>
+
+  <h3>📖 Tabla Lengua Aérea (NATO)</h3>
+  <table>
+    <tr><th>Letra</th><th>Palabra</th></tr>
+    <tr><td>A</td><td>Alfa</td></tr><tr><td>B</td><td>Bravo</td></tr>
+    <tr><td>C</td><td>Charlie</td></tr><tr><td>D</td><td>Delta</td></tr>
+    <tr><td>E</td><td>Eco</td></tr><tr><td>F</td><td>Foxtrot</td></tr>
+    <tr><td>G</td><td>Golf</td></tr><tr><td>H</td><td>Hotel</td></tr>
+    <tr><td>I</td><td>India</td></tr><tr><td>J</td><td>Juliett</td></tr>
+    <tr><td>K</td><td>Kilo</td></tr><tr><td>L</td><td>Lima</td></tr>
+    <tr><td>M</td><td>Mike</td></tr><tr><td>N</td><td>November</td></tr>
+    <tr><td>O</td><td>Oscar</td></tr><tr><td>P</td><td>Papa</td></tr>
+    <tr><td>Q</td><td>Quebec</td></tr><tr><td>R</td><td>Romeo</td></tr>
+    <tr><td>S</td><td>Sierra</td></tr><tr><td>T</td><td>Tango</td></tr>
+    <tr><td>U</td><td>Uniform</td></tr><tr><td>V</td><td>Victor</td></tr>
+    <tr><td>W</td><td>Whiskey</td></tr><tr><td>X</td><td>X-ray</td></tr>
+    <tr><td>Y</td><td>Yankee</td></tr><tr><td>Z</td><td>Zulu</td></tr>
+  </table>
 
   <script>
     const NATO = {
@@ -189,24 +225,31 @@
         transformar();
       }
     });
+
+    // ---------------- QR ----------------
+    function generarQR() {
+      const link = document.getElementById("link").value.trim();
+      if(!link) return alert("Pegá un link primero.");
+      const qrDiv = document.getElementById("qr");
+      qrDiv.innerHTML = "";
+      const canvas = document.createElement("canvas");
+      qrDiv.appendChild(canvas);
+      QRCode.toCanvas(canvas, link, { width: 200 }, function (error) {
+        if (error) console.error(error);
+      });
+    }
+
+    function descargarQR() {
+      const canvas = document.querySelector("#qr canvas");
+      if(!canvas) return alert("Generá un QR primero.");
+      const link = document.createElement("a");
+      link.download = "codigo_qr.png";
+      link.href = canvas.toDataURL();
+      link.click();
+    }
   </script>
 
-  <h3>📖 Tabla Lengua Aérea (NATO)</h3>
-  <table>
-    <tr><th>Letra</th><th>Palabra</th></tr>
-    <tr><td>A</td><td>Alfa</td></tr><tr><td>B</td><td>Bravo</td></tr>
-    <tr><td>C</td><td>Charlie</td></tr><tr><td>D</td><td>Delta</td></tr>
-    <tr><td>E</td><td>Eco</td></tr><tr><td>F</td><td>Foxtrot</td></tr>
-    <tr><td>G</td><td>Golf</td></tr><tr><td>H</td><td>Hotel</td></tr>
-    <tr><td>I</td><td>India</td></tr><tr><td>J</td><td>Juliett</td></tr>
-    <tr><td>K</td><td>Kilo</td></tr><tr><td>L</td><td>Lima</td></tr>
-    <tr><td>M</td><td>Mike</td></tr><tr><td>N</td><td>November</td></tr>
-    <tr><td>O</td><td>Oscar</td></tr><tr><td>P</td><td>Papa</td></tr>
-    <tr><td>Q</td><td>Quebec</td></tr><tr><td>R</td><td>Romeo</td></tr>
-    <tr><td>S</td><td>Sierra</td></tr><tr><td>T</td><td>Tango</td></tr>
-    <tr><td>U</td><td>Uniform</td></tr><tr><td>V</td><td>Victor</td></tr>
-    <tr><td>W</td><td>Whiskey</td></tr><tr><td>X</td><td>X-ray</td></tr>
-    <tr><td>Y</td><td>Yankee</td></tr><tr><td>Z</td><td>Zulu</td></tr>
-  </table>
+  <!-- Librería QR (ligera y directa) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 </body>
 </html>
