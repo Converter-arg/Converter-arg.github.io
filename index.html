@@ -7,11 +7,11 @@
   <style>
     :root{
       --bg:#0d0d0d; --panel:#151515; --muted:#9fb0c8; --text:#e6eef8; --accent:#76c7ff;
-      --input:#1f1f1f; --border:rgba(255,255,255,0.06); --danger:#ff6b6b;
+      --input:#1f1f1f; --border:rgba(255,255,255,0.06); --danger:#ff6b6b; --success:#28a745;
     }
     body.light{
       --bg:#f6f7fb; --panel:#ffffff; --muted:#5b6b7a; --text:#0f1720; --accent:#0077cc;
-      --input:#ffffff; --border:rgba(0,0,0,0.08); --danger:#e06464;
+      --input:#ffffff; --border:rgba(0,0,0,0.08); --danger:#e06464; --success:#2ecc71;
     }
     body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;
       background:var(--bg);color:var(--text);font-family:Inter,Roboto,Arial,sans-serif;transition:.3s;}
@@ -25,45 +25,46 @@
       border:1px solid var(--border);padding:7px 9px;}
     button{cursor:pointer;border:none;padding:8px 12px;font-weight:600}
     button.primary{background:var(--accent);color:var(--bg);}
+    button.success{background:var(--success);color:#fff;border:none;padding:8px 12px;border-radius:10px;font-weight:600;text-decoration:none;display:inline-block;}
     button.danger{background:var(--danger);color:#fff;}
-    button.icon{background:transparent;color:var(--text);border:1px dashed var(--border);}
-textarea,
-#salida {
-  width: 100%;
-  min-height: 40px;
-  max-height: 300px;
-  overflow: hidden;
-  padding: 12px;
-  border: 1px dashed var(--border);
-  border-radius: 10px;
-  font-family: ui-monospace, monospace;
-  font-size: 1rem;
-  line-height: 1.5;
-  box-sizing: border-box;
-  transition: .2s;
-  margin-bottom: 10px;
-  font-size: 1rem;
-}
-
-/* Estilos específicos para textarea */
-textarea {
-  resize: none;
-  background: var(--input);
-  color: var(--text);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
+    button.icon{background:transparent;color:var(--text);border:1px dashed var(--border);padding:8px 10px;border-radius:10px;}
+    textarea,
+    #salida {
+      width: 100%;
+      min-height: 40px;
+      max-height: 300px;
+      overflow: hidden;
+      padding: 12px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      font-family: ui-monospace, monospace;
+      font-size: 1rem;
+      line-height: 1.5;
+      box-sizing: border-box;
+      transition: .2s;
+      margin-bottom: 10px;
+    }
+    textarea {
+      resize: none;
+      background: var(--input);
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
     table{width:100%;border-collapse:collapse;margin-top:12px;display:none;}
     th,td{padding:6px;border:1px dashed var(--border);text-align:center;}
     th{color:var(--accent);}
     #qrCanvas{margin-top:12px;display:none;background:#fff;border-radius:10px;}
+    .qr-container{display:flex;flex-direction:column;align-items:center;justify-content:center;margin-top:8px;}
     .small{font-size:.85rem;color:var(--muted);}
-    /* estilo del input file */
     .file-input{display:none;}
     .file-label{display:inline-block;background:var(--accent);color:var(--bg);
       padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer;}
     .file-label:hover{opacity:0.85;}
+    .qr-buttons{display:flex;gap:8px;align-items:center;}
+    @media (max-width:640px){
+      .qr-buttons{flex-direction:column; align-items:flex-start;}
+    }
   </style>
 </head>
 <body>
@@ -72,12 +73,18 @@ textarea {
       <h1>Convertiche</h1>
       <div class="controls">
         <select id="modo" onchange="onModoChange()">
+          <option disabled>[Sin tablas]</option>
           <option value="cesar">César</option>
+          <option value="geringoso">Geringoso</option>
+          <option value="vigenere">Vigenère</option>
+          <option value="enigma">Enigma</option>
+          <option disabled>[Con tablas]</option>
           <option value="nato">Lengua Aérea (NATO)</option>
           <option value="binario">Binario</option>
-          <option value="geringoso">Geringoso</option>
           <option value="hexadecimal">Hexadecimal</option>
-          <option disabled>──────────</option>
+          <option value="morse">Morse</option>
+          <option value="winding">Winding </option>
+          <option disabled>[Generador de QR]</option>
           <option value="leerQR">Leer QR</option>
           <option value="crearQR">Crear QR</option>
         </select>
@@ -86,31 +93,175 @@ textarea {
         <button class="danger" onclick="borrarTodo()">Borrar</button>
       </div>
     </header>
+
     <textarea id="entrada" placeholder="Escribe aquí..."></textarea>
     <div id="salida"></div>
-    <canvas id="qrCanvas"></canvas>
-    <div id="resultadoQR" class="small"></div>
+
+    <!-- QR centered below -->
+    <div class="qr-container" id="qrArea">
+      <canvas id="qrCanvas" width="220" height="220"></canvas>
+      <div id="resultadoQR" class="small"></div>
+    </div>
+
     <table id="tabla"></table>
   </div>
 
+  <!-- librerías -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+
   <script>
-    /* ===== Datos ===== */
+    /* ===== datos ===== */
     const NATO={A:"Alfa",B:"Bravo",C:"Charlie",D:"Delta",E:"Eco",F:"Foxtrot",G:"Golf",H:"Hotel",
       I:"India",J:"Juliett",K:"Kilo",L:"Lima",M:"Mike",N:"November",O:"Oscar",P:"Papa",Q:"Quebec",
       R:"Romeo",S:"Sierra",T:"Tango",U:"Uniform",V:"Victor",W:"Whiskey",X:"X-ray",Y:"Yankee",Z:"Zulu"};
 
-    /* ===== Transformaciones ===== */
-    const cesar=(txt,s)=>txt.replace(/[a-z]/gi,ch=>{
-      const base=ch>='a'?'a':'A';return String.fromCharCode((ch.charCodeAt(0)-base.charCodeAt(0)+s+26)%26+base.charCodeAt(0));
-    });
-    const nato=t=>[...t].map(c=>/[a-z]/i.test(c)?NATO[c.toUpperCase()]:c===' ' ? '/' : c).join(' ');
-    const bin=t=>[...t].map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' ');
-    const hex=t=>[...t].map(c=>c.charCodeAt(0).toString(16).toUpperCase()).join(' ');
-    const ger=(t,p)=>t.replace(/[aeiouáéíóú]/gi,v=>v+p+v.toLowerCase());
+    const MORSE = {
+      "A":".-","B":"-...","C":"-.-.","D":"-..","E":".","F":"..-.",
+      "G":"--.","H":"....","I":"..","J":".---","K":"-.-","L":".-..",
+      "M":"--","N":"-.","O":"---","P":".--.","Q":"--.-","R":".-.",
+      "S":"...","T":"-","U":"..-","V":"...-","W":".--","X":"-..-",
+      "Y":"-.--","Z":"--..",
+      "0":"-----","1":".----","2":"..---","3":"...--","4":"....-",
+      "5":".....","6":"-....","7":"--...","8":"---..","9":"----.",
+      ".":".-.-.-",",":"--..--","?":"..--..","!":"-.-.--","/":"-..-.",
+      "(": "-.--.", ")":"-.--.-","&":".-...",":":"---...",";":"-.-.-.","=":"-...-",
+      "+":".-.-.","-":"-....-","_":"..--.-","\"":".-..-.","$":"...-..-","@":".--.-."
+    };
+    const MORSE_REV = Object.fromEntries(Object.entries(MORSE).map(([k,v])=>[v,k]));
 
-    /* ===== Animación tipo scramble ===== */
+    /* Wingdings-style (winding) mapping - a repeatable symbol set */
+    const WINDING_MAP = [
+      "✌","👌","👍","👎","☜","☞","☝","☟","✋","☺","😐","☹","💣","☠","⇧","⚐","🏱","✈","☼","💧","❄","🕆","✞","🕈","✠","✡","☪"
+    ];
+    const WINDING_REV = Object.fromEntries(WINDING_MAP.map((s,i)=>[s,String.fromCharCode(65+i)]));
+
+    /* ===== transformaciones auxiliares ===== */
+    const cesar = (txt,s) => txt.replace(/[a-z]/gi,ch=>{
+      const base = ch >= 'a' ? 97 : 65;
+      return String.fromCharCode((ch.charCodeAt(0)-base + s + 26) % 26 + base);
+    });
+    const nato = t => [...t].map(c => /[a-z]/i.test(c) ? NATO[c.toUpperCase()] : (c===' ' ? '/' : c)).join(' ');
+    const bin = t => [...t].map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' ');
+    const hex = t => [...t].map(c=>c.charCodeAt(0).toString(16).toUpperCase()).join(' ');
+    const ger = (t,p) => t.replace(/[aeiouáéíóú]/gi, v => v + p + v.toLowerCase());
+
+    /* Morse */
+    function toMorse(text){
+      return [...text.toUpperCase()].map(ch => MORSE[ch] || (ch === ' ' ? '/' : ch)).join(' ');
+    }
+    function fromMorse(text){
+      // assume tokens separated by spaces, slash = space
+      return text.split(' ').map(tok => tok === '/' ? ' ' : (MORSE_REV[tok] || tok)).join('');
+    }
+
+    /* Vigenere */
+    function vigenereEnc(plain, key){
+      if(!key) return "[Falta clave]";
+      let j = 0;
+      return [...plain.toUpperCase()].map(c=>{
+        if(c >= 'A' && c <= 'Z'){
+          const k = key[j++ % key.length].toUpperCase().charCodeAt(0)-65;
+          return String.fromCharCode((c.charCodeAt(0)-65 + k) %26 +65);
+        }
+        return c;
+      }).join('');
+    }
+    function vigenereDec(cipher, key){
+      if(!key) return "[Falta clave]";
+      let j = 0;
+      return [...cipher.toUpperCase()].map(c=>{
+        if(c >= 'A' && c <= 'Z'){
+          const k = key[j++ % key.length].toUpperCase().charCodeAt(0)-65;
+          return String.fromCharCode((c.charCodeAt(0)-65 - k +26) %26 +65);
+        }
+        return c;
+      }).join('');
+    }
+
+    /* Winding (Wingdings-style) */
+    function toWinding(text){
+      return [...text.toUpperCase()].map(c=>{
+        if(c >= 'A' && c <= 'Z'){
+          return WINDING_MAP[c.charCodeAt(0)-65];
+        }
+        return c;
+      }).join(' ');
+    }
+    function fromWinding(text){
+      // tokens separated by spaces; try to map each symbol back
+      return text.split(' ').map(tok => WINDING_REV[tok] || tok).join('');
+    }
+
+    /* ===== Enigma (simplified, 3 rotors I-II-III, reflector B) ===== */
+    const ROTORS = {
+      I:    {w:"EKMFLGDQVZNTOWYHXUSPAIBRCJ", notch:"Q"},
+      II:   {w:"AJDKSIRUXBLHWTMCQGZNPYFVOE", notch:"E"},
+      III:  {w:"BDFHJLCPRTXVZNYEIWGAKMUSQO", notch:"V"}
+    };
+    const REFLECTOR_B = "YRUHQSLDPXNGOKMIEBFZCWVJAT";
+
+    function enigmaProcess(letter, rotors, positions, forward=true){
+      // helper not used directly; we'll implement full run below
+    }
+
+    function enigmaEncrypt(text, posStr){
+      // posStr expected like "ABC" - initial rotor positions (left, middle, right)
+      // rotors fixed: I (left), II (middle), III (right)
+      const rNames = ['I','II','III'];
+      const rW = rNames.map(n=>ROTORS[n].w);
+      const rNotch = rNames.map(n=>ROTORS[n].notch);
+      // convert wirings to arrays of 0-25
+      const wiring = rW.map(w => w.split('').map(c=>c.charCodeAt(0)-65));
+      const revWiring = wiring.map(w => {
+        const rev = Array(26);
+        for(let i=0;i<26;i++) rev[w[i]] = i;
+        return rev;
+      });
+      // positions: left,middle,right
+      const pos = [
+        (posStr?.[0]||'A').charCodeAt(0)-65,
+        (posStr?.[1]||'A').charCodeAt(0)-65,
+        (posStr?.[2]||'A').charCodeAt(0)-65
+      ];
+      let output = '';
+      for(const ch of text.toUpperCase()){
+        if(ch < 'A' || ch > 'Z'){ output += ch; continue; }
+        // stepping (right rotor is index 2)
+        // double stepping: if middle rotor at notch, it and left step; if right at notch, middle steps.
+        // Implement standard stepping:
+        if (String.fromCharCode((pos[1]+65)) === ROTORS['II'].notch) {
+          // if middle at notch -> step left and middle (double step)
+          pos[0] = (pos[0]+1)%26;
+          pos[1] = (pos[1]+1)%26;
+        }
+        if (String.fromCharCode((pos[2]+65)) === ROTORS['III'].notch) {
+          pos[1] = (pos[1]+1)%26;
+        }
+        // always step rightmost
+        pos[2] = (pos[2]+1)%26;
+
+        // signal index through rotors: plugboard omitted
+        let c = ch.charCodeAt(0)-65;
+        // through right->middle->left (forward)
+        // rotor 3 (right)
+        c = (wiring[2][ (c + pos[2]) %26 ] - pos[2] + 26) %26;
+        // rotor 2
+        c = (wiring[1][ (c + pos[1]) %26 ] - pos[1] + 26) %26;
+        // rotor 1
+        c = (wiring[0][ (c + pos[0]) %26 ] - pos[0] + 26) %26;
+        // reflector
+        c = REFLECTOR_B.charCodeAt(c)-65;
+        // back through rotors (reverse)
+        c = (revWiring[0][ (c + pos[0]) %26 ] - pos[0] + 26) %26;
+        c = (revWiring[1][ (c + pos[1]) %26 ] - pos[1] + 26) %26;
+        c = (revWiring[2][ (c + pos[2]) %26 ] - pos[2] + 26) %26;
+        output += String.fromCharCode(c+65);
+      }
+      return output;
+    }
+
+    /* ===== animación scramble (igual que antes) ===== */
     function scrambleTo(finalText,speed=30){
       const salida=document.getElementById("salida");
       const chars="█▓▒░<>#%$&?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -129,72 +280,154 @@ textarea {
       },speed);
     }
 
-    /* ===== UI ===== */
+    /* ===== UI y lógica principal (manteniendo estética original) ===== */
     function aplicarModo(anim=true){
       const modo=document.getElementById("modo").value;
       const entrada=document.getElementById("entrada").value||"";
       let res=entrada;
 
-      // limpiar QR
+      // limpiar QR y download
       document.getElementById("qrCanvas").style.display="none";
       document.getElementById("resultadoQR").textContent="";
+      const downloadLink = document.getElementById("downloadQR");
+      if(downloadLink) downloadLink.style.display = "none";
 
-      if(modo==="cesar"){res=cesar(entrada,parseInt(document.getElementById("shift")?.value)||0);}
-      else if(modo==="nato"){res=nato(entrada);}
-      else if(modo==="binario"){res=bin(entrada);}
-      else if(modo==="hexadecimal"){res=hex(entrada);}
-      else if(modo==="geringoso"){const p=document.getElementById("pref")?.value||"p";res=ger(entrada,p);}
+      if(modo==="cesar"){ res = cesar(entrada, parseInt(document.getElementById("shift")?.value)||0); }
+      else if(modo==="nato"){ res = nato(entrada); }
+      else if(modo==="binario"){ res = bin(entrada); }
+      else if(modo==="hexadecimal"){ res = hex(entrada); }
+      else if(modo==="geringoso"){ const p=document.getElementById("pref")?.value||"p"; res = ger(entrada,p); }
+      else if(modo==="morse"){ res = toMorse(entrada); }
+      else if(modo==="vigenere"){ const key=document.getElementById("vkey")?.value||""; res = vigenereEnc(entrada,key); }
+      else if(modo==="enigma"){ const k=document.getElementById("ekey")?.value||"AAA"; res = enigmaEncrypt(entrada,k); }
+      else if(modo==="winding"){ res = toWinding(entrada); }
       else if(modo==="crearQR"){
-        QRCode.toCanvas(document.getElementById("qrCanvas"),entrada,{width:220});
-        document.getElementById("qrCanvas").style.display="block";
-        res="QR generado abajo";
+        const canvas=document.getElementById("qrCanvas");
+        QRCode.toCanvas(canvas,entrada || " ",{width:220}, err=>{
+          if(!err){
+            canvas.style.display="block";
+            document.getElementById("resultadoQR").textContent = "QR generado";
+            // si existe link en extras, actualizar href y mostrar
+            const link = document.getElementById("downloadQR");
+            try{
+              const url = canvas.toDataURL("image/png");
+              if(link){ link.href = url; link.style.display = "inline-block"; }
+            }catch(e){}
+          } else {
+            document.getElementById("resultadoQR").textContent = "Error generando QR";
+          }
+        });
+        res = "QR generado solo descargalo";
       }
-      else if(modo==="leerQR"){res="";}
+      else if(modo==="leerQR"){
+        res = ""; // lectura ocurre por file input -> leerQR()
+      }
 
-      if(anim){scrambleTo(res);} else{
-        document.getElementById("salida").textContent=res;
-        autoResizeSalida();
-      }
+      if(anim) scrambleTo(res); else { document.getElementById("salida").textContent = res; autoResizeSalida(); }
     }
 
     function onModoChange(){
       const modo=document.getElementById("modo").value;
-      const extras=document.getElementById("extras");const tabla=document.getElementById("tabla");
-      extras.innerHTML="";tabla.style.display="none";tabla.innerHTML="";
-      document.getElementById("qrCanvas").style.display="none"; 
+      const extras=document.getElementById("extras");
+      const tabla=document.getElementById("tabla");
+      extras.innerHTML=""; tabla.style.display="none"; tabla.innerHTML="";
+      document.getElementById("qrCanvas").style.display="none";
+      const qrArea = document.getElementById("qrArea"); qrArea.style.display = "none";
+      // hide download link if present
+      if(document.getElementById("downloadQR")) document.getElementById("downloadQR").style.display="none";
 
-      if(modo==="cesar"){extras.innerHTML='Desplazamiento: <input id="shift" type="number" value="3" style="width:60px">';}
-      if(modo==="geringoso"){extras.innerHTML='Letra: <input id="pref" value="p" style="width:60px">';}
-      if(modo==="crearQR"){extras.innerHTML='<button class="primary" onclick="aplicarModo(true)">Generar QR</button>';}
-      if(modo==="leerQR"){
-        extras.innerHTML='<input type="file" id="imagenQR" class="file-input" accept="image/*"><label for="imagenQR" class="file-label">📷 Seleccionar QR</label>';
-        document.getElementById("imagenQR").addEventListener("change",leerQR);
+      // extras según modo
+      if(modo==="cesar"){
+        extras.innerHTML = 'Desplazamiento: <input id="shift" type="number" value="3" style="width:60px">';
+        document.getElementById("shift").addEventListener("input", ()=>aplicarModo(false));
       }
-      if(modo==="nato"){tabla.innerHTML="<tr><th>Letra</th><th>Palabra</th></tr>"+Object.entries(NATO).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("");tabla.style.display="table";}
-      if(modo==="binario"){tabla.innerHTML="<tr><th>Letra</th><th>Binario</th></tr>"+Array.from({length:26},(_,i)=>{let ch=String.fromCharCode(65+i);return `<tr><td>${ch}</td><td>${ch.charCodeAt(0).toString(2).padStart(8,'0')}</td></tr>`;}).join("");tabla.style.display="table";}
-      if(modo==="hexadecimal"){tabla.innerHTML="<tr><th>Letra</th><th>Hex</th></tr>"+Array.from({length:26},(_,i)=>{let ch=String.fromCharCode(65+i);return `<tr><td>${ch}</td><td>${ch.charCodeAt(0).toString(16).toUpperCase()}</td></tr>`;}).join("");tabla.style.display="table";}
-      aplicarModo(true);
+      if(modo==="geringoso"){
+        extras.innerHTML = 'Letra: <input id="pref" value="p" style="width:60px">';
+        document.getElementById("pref").addEventListener("input", ()=>aplicarModo(false));
+      }
+      if(modo==="vigenere"){
+        extras.innerHTML = 'Clave: <input id="vkey" type="text" placeholder="clave">';
+        document.getElementById("vkey").addEventListener("input", ()=>aplicarModo(false));
+      }
+      if(modo==="enigma"){
+        // enigma: pedir 3 letras para posiciones iniciales
+        extras.innerHTML = 'Clave (3 letras posiciones): <input id="ekey" type="text" maxlength="3" value="AAA" style="width:80px">';
+        document.getElementById("ekey").addEventListener("input", ()=>aplicarModo(false));
+      }
+      if(modo==="crearQR"){
+       extras.innerHTML = `
+  <div class="qr-buttons">
+    <button class="primary" onclick="aplicarModo(true)">Generar QR</button>
+    <button id="downloadQR" class="primary" style="display:none" onclick="descargarQR()">Descargar QR</button>
+  </div>
+`;
+
+      }
+      if(modo==="leerQR"){
+        extras.innerHTML = '<input type="file" id="imagenQR" class="file-input" accept="image/*"><label for="imagenQR" class="file-label">Seleccionar QR</label>';
+        // delegar lectura al input
+        setTimeout(()=>{ const f=document.getElementById("imagenQR"); if(f) f.addEventListener("change", ()=>leerQR()); }, 30);
+      }
+
+      // tablas según modo
+      if(modo==="nato"){
+        tabla.innerHTML = "<tr><th>Letra</th><th>Palabra</th></tr>" + Object.entries(NATO).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+        tabla.style.display = "table";
+      }
+      if(modo==="binario"){
+        let rows = "<tr><th>Letra</th><th>Binario</th></tr>";
+        for(let i=65;i<=90;i++){ const ch=String.fromCharCode(i); rows += `<tr><td>${ch}</td><td>${i.toString(2).padStart(8,'0')}</td></tr>`; }
+        tabla.innerHTML = rows; tabla.style.display = "table";
+      }
+      if(modo==="hexadecimal"){
+        let rows = "<tr><th>Letra</th><th>Hex</th></tr>";
+        for(let i=65;i<=90;i++){ const ch=String.fromCharCode(i); rows += `<tr><td>${ch}</td><td>${i.toString(16).toUpperCase()}</td></tr>`; }
+        tabla.innerHTML = rows; tabla.style.display = "table";
+      }
+      if(modo==="morse"){
+        let rows = "<tr><th>Carácter</th><th>Morse</th></tr>";
+        Object.entries(MORSE).forEach(([k,v])=> rows += `<tr><td>${k}</td><td>${v}</td></tr>`);
+        tabla.innerHTML = rows; tabla.style.display = "table";
+      }
+      if(modo==="winding"){
+        let rows = "<tr><th>Letra</th><th>Símbolo</th></tr>";
+        for(let i=0;i<26;i++){ rows += `<tr><td>${String.fromCharCode(65+i)}</td><td>${WINDING_MAP[i]}</td></tr>`; }
+        tabla.innerHTML = rows; tabla.style.display = "table";
+      }
+
+      // aplicar para mostrar resultado inicial con animación
+      setTimeout(()=>aplicarModo(true), 40);
     }
 
     function borrarTodo(){
-      document.getElementById("entrada").value="";
-      document.getElementById("salida").textContent="";
+      document.getElementById("entrada").value = "";
+      document.getElementById("salida").textContent = "";
       autoResizeEntrada();
       autoResizeSalida();
-      document.getElementById("qrCanvas").style.display="none";
-      document.getElementById("resultadoQR").textContent="";
+      document.getElementById("qrCanvas").style.display = "none";
+      document.getElementById("resultadoQR").textContent = "";
+      const download = document.getElementById("downloadQR");
+      if(download) download.style.display = "none";
+      // clean extra file input if present
+      const fi = document.getElementById("imagenQR");
+      if(fi) fi.value = "";
     }
 
     function leerQR(){
-      const f=document.getElementById("imagenQR").files[0];if(!f)return;
-      const r=new FileReader();r.onload=e=>{
-        const img=new Image();img.onload=()=>{
-          const c=document.createElement("canvas");c.width=img.width;c.height=img.height;
-          const ctx=c.getContext("2d");ctx.drawImage(img,0,0);
-          const code=jsQR(ctx.getImageData(0,0,c.width,c.height).data,c.width,c.height);
-          if(code){scrambleTo(code.data);}else{document.getElementById("salida").textContent="No se detectó QR";autoResizeSalida();}
-        };img.src=e.target.result;
-      };r.readAsDataURL(f);
+      const f = document.getElementById("imagenQR")?.files?.[0];
+      if(!f) return;
+      const r = new FileReader();
+      r.onload = function(ev){
+        const img = new Image();
+        img.onload = function(){
+          const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
+          const ctx = c.getContext("2d"); ctx.drawImage(img,0,0);
+          const code = jsQR(ctx.getImageData(0,0,c.width,c.height).data, c.width, c.height);
+          if(code){ scrambleTo(code.data); } else { document.getElementById("salida").textContent="No se detectó QR"; autoResizeSalida(); }
+        };
+        img.src = ev.target.result;
+      };
+      r.readAsDataURL(f);
     }
 
     function toggleTema(){
@@ -203,31 +436,42 @@ textarea {
       document.getElementById("themeBtn").textContent=document.body.classList.contains("light")?"☀️":"🌙";
     }
 
-    // auto-resize entrada
-    const entrada=document.getElementById("entrada");
-    entrada.addEventListener("input",()=>{
+    // auto-resize entrada/salida + live update
+    const entrada = document.getElementById("entrada");
+    entrada.addEventListener("input", ()=>{
       autoResizeEntrada();
       aplicarModo(false);
     });
-    function autoResizeEntrada(){
-      entrada.style.height="auto";
-      entrada.style.height=entrada.scrollHeight+"px";
-    }
-    function autoResizeSalida(){
-      const salida=document.getElementById("salida");
-      salida.style.height="auto";
-      salida.style.height=salida.scrollHeight+"px";
-    }
-
-    // init
-    (function(){
-      if(localStorage.getItem("tema")==="light"){
-        document.body.classList.add("light");
-        document.getElementById("themeBtn").textContent="☀️";
+    // ENTER fast transform (Enter without Shift)
+    entrada.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter" && !e.shiftKey){
+        e.preventDefault();
+        aplicarModo(true);
       }
+    });
+
+    function autoResizeEntrada(){ entrada.style.height = "auto"; entrada.style.height = entrada.scrollHeight + "px"; }
+    function autoResizeSalida(){ const s=document.getElementById("salida"); s.style.height = "auto"; s.style.height = Math.max(40, s.scrollHeight) + "px"; }
+
+    // download link click handling (safe): set href after QR generated already
+    document.addEventListener("click", (e)=>{
+      if(e.target && e.target.id === "downloadQR"){
+        const canvas=document.getElementById("qrCanvas");
+        try{
+          const link = document.getElementById("downloadQR");
+          link.href = canvas.toDataURL("image/png");
+        }catch(err){}
+      }
+    });
+
+    /* ===== init ===== */
+    (function(){
+      if(localStorage.getItem("tema")==="light"){ document.body.classList.add("light"); document.getElementById("themeBtn").textContent="☀️"; }
       onModoChange();
       autoResizeEntrada();
       autoResizeSalida();
+      // hide qr area on load
+      document.getElementById("qrArea").style.display = "none";
     })();
   </script>
 </body>
