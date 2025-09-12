@@ -291,6 +291,8 @@
       document.getElementById("resultadoQR").textContent="";
       const downloadLink = document.getElementById("downloadQR");
       if(downloadLink) downloadLink.style.display = "none";
+      const qrArea = document.getElementById("qrArea");
+      qrArea.style.display = "none";
 
       if(modo==="cesar"){ res = cesar(entrada, parseInt(document.getElementById("shift")?.value)||0); }
       else if(modo==="nato"){ res = nato(entrada); }
@@ -303,21 +305,25 @@
       else if(modo==="winding"){ res = toWinding(entrada); }
       else if(modo==="crearQR"){
         const canvas=document.getElementById("qrCanvas");
+        qrArea.style.display = "flex"; // Mostrar el área de previsualización
         QRCode.toCanvas(canvas,entrada || " ",{width:220}, err=>{
           if(!err){
             canvas.style.display="block";
             document.getElementById("resultadoQR").textContent = "QR generado";
-            // si existe link en extras, actualizar href y mostrar
             const link = document.getElementById("downloadQR");
             try{
               const url = canvas.toDataURL("image/png");
-              if(link){ link.href = url; link.style.display = "inline-block"; }
+              if(link){
+                link.href = url;
+                link.download = "qr.png"; // Forzar descarga como imagen
+                link.style.display = "inline-block";
+              }
             }catch(e){}
           } else {
             document.getElementById("resultadoQR").textContent = "Error generando QR";
           }
         });
-        res = "QR generado solo descargalo";
+        res = "QR generado, puedes descargarlo abajo";
       }
       else if(modo==="leerQR"){
         res = ""; // lectura ocurre por file input -> leerQR()
@@ -355,13 +361,13 @@
         document.getElementById("ekey").addEventListener("input", ()=>aplicarModo(false));
       }
       if(modo==="crearQR"){
-       extras.innerHTML = `
+        extras.innerHTML = `
   <div class="qr-buttons">
     <button class="primary" onclick="aplicarModo(true)">Generar QR</button>
-    <button id="downloadQR" class="primary" style="display:none" onclick="descargarQR()">Descargar QR</button>
+    <a id="downloadQR" class="primary" style="display:none" href="#" download="qr.png">Descargar QR</a>
   </div>
 `;
-
+        document.getElementById("qrArea").style.display = "flex"; // Mostrar área QR al seleccionar modo
       }
       if(modo==="leerQR"){
         extras.innerHTML = '<input type="file" id="imagenQR" class="file-input" accept="image/*"><label for="imagenQR" class="file-label">Seleccionar QR</label>';
@@ -411,6 +417,7 @@
       // clean extra file input if present
       const fi = document.getElementById("imagenQR");
       if(fi) fi.value = "";
+      document.getElementById("qrArea").style.display = "none";
     }
 
     function leerQR(){
@@ -436,43 +443,4 @@
       document.getElementById("themeBtn").textContent=document.body.classList.contains("light")?"☀️":"🌙";
     }
 
-    // auto-resize entrada/salida + live update
-    const entrada = document.getElementById("entrada");
-    entrada.addEventListener("input", ()=>{
-      autoResizeEntrada();
-      aplicarModo(false);
-    });
-    // ENTER fast transform (Enter without Shift)
-    entrada.addEventListener("keydown", (e)=>{
-      if(e.key === "Enter" && !e.shiftKey){
-        e.preventDefault();
-        aplicarModo(true);
-      }
-    });
-
-    function autoResizeEntrada(){ entrada.style.height = "auto"; entrada.style.height = entrada.scrollHeight + "px"; }
-    function autoResizeSalida(){ const s=document.getElementById("salida"); s.style.height = "auto"; s.style.height = Math.max(40, s.scrollHeight) + "px"; }
-
-    // download link click handling (safe): set href after QR generated already
-    document.addEventListener("click", (e)=>{
-      if(e.target && e.target.id === "downloadQR"){
-        const canvas=document.getElementById("qrCanvas");
-        try{
-          const link = document.getElementById("downloadQR");
-          link.href = canvas.toDataURL("image/png");
-        }catch(err){}
-      }
-    });
-
-    /* ===== init ===== */
-    (function(){
-      if(localStorage.getItem("tema")==="light"){ document.body.classList.add("light"); document.getElementById("themeBtn").textContent="☀️"; }
-      onModoChange();
-      autoResizeEntrada();
-      autoResizeSalida();
-      // hide qr area on load
-      document.getElementById("qrArea").style.display = "none";
-    })();
-  </script>
-</body>
-</html>
+    // auto-resize entrada/s
